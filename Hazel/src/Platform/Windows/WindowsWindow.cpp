@@ -1,13 +1,10 @@
 #include "hzpch.h"
-#include "Hazel/Log.h"
 #include "Hazel/Core.h"
 #include "WindowsWindow.h"
 
 namespace Hazel {
 
 	static bool s_GLFWInitialized = false;
-
-	Window::~Window() {}
 
 	Window* Window::Create(const WindowProps& props)
 	{
