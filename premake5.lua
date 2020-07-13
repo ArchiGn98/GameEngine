@@ -8,7 +8,7 @@ workspace "Hazel"
         "Dist"
     }
 
-outdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
+outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 InclueDir = {}
 InclueDir["GLFW"] = "Hazel/vendor/GLFW/include"
@@ -20,8 +20,8 @@ project "Hazel"
     kind "SharedLib"
     language "c++"
 
-    targetdir ("bin/" .. outdir .. "/%{prj.name}")
-    objdir ("bin-int/" .. outdir .. "/%{prj.name}")
+    targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+    objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 
     pchheader "hzpch.h"
     pchsource "Hazel/src/hzpch.cpp"
@@ -59,7 +59,7 @@ project "Hazel"
 
         postbuildcommands
         {
-            ("{COPY} %{cfg.buildtarget.relpath} ../bin/" .. outdir .. "/SandBox")
+            ("{COPY} %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/SandBox")
 		}
 
     filter "configurations:Debug"
@@ -86,8 +86,8 @@ project "SandBox"
     kind "ConsoleApp"
     language "c++"
 
-    targetdir ("bin/" .. outdir .. "/%{prj.name}")
-    objdir ("bin-int/" .. outdir .. "/%{prj.name}")
+    targetdir ("bin/" .. outputdir .. "/%{prj.name}")
+    objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 
     files
     {
