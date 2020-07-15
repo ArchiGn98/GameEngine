@@ -2,9 +2,18 @@
 #include "Hazel/Core.h"
 #include "WindowsWindow.h"
 
+#include "Hazel/Events/ApplicationEvent.h"
+#include "Hazel/Events/KeyEvent.h"
+#include "Hazel/Events/MouseEvent.h"
+
 namespace Hazel {
 
 	static bool s_GLFWInitialized = false;
+
+	static void GLFWerrorCallback(int error_code, const char* description)
+	{
+		HZ_CORE_ERROR("GLFW Error ({0}): {1}", error_code, description);
+	}
 
 	Window* Window::Create(const WindowProps& props)
 	{
@@ -33,7 +42,8 @@ namespace Hazel {
 			// TODO: glfwTerminate on syst shutdown
 			int success = glfwInit();
 			HZ_CORE_ASSERT(success, "Could not initialize GLFW!");
-			
+			glfwSetErrorCallback(GLFWerrorCallback);
+
 			s_GLFWInitialized = true;
 		}
 
@@ -41,6 +51,102 @@ namespace Hazel {
 		glfwMakeContextCurrent(m_Window);
 		glfwSetWindowUserPointer(m_Window, &m_Data);
 		SetVSync(true);
+
+		// Set GLFW callbacks
+		glfwSetWindowSizeCallback(m_Window, [](GLFWwindow* window, int width, int height) 
+			{
+				WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+				data.Width = width;
+				data.Height = height;
+
+				WindowResizeEvent event(width, height);
+				data.EventCallback(event);				
+			});
+
+		glfwSetWindowCloseCallback(m_Window, [](GLFWwindow* window)
+			{
+				WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+
+				WindowCloseEvent event;
+				data.EventCallback(event);
+			});
+
+		glfwSetKeyCallback(m_Window, [](GLFWwindow* window, int key, int scancode, int action, int mods)
+			{
+				WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+
+				static std::pair<int, int> repeat_key; // <key, repeat_count>
+
+				switch (action)
+				{
+					case GLFW_PRESS:
+					{
+						repeat_key.first = key;
+						repeat_key.second = 0;
+
+						KeyPressedEvent event(key, repeat_key.second);
+						data.EventCallback(event);
+						break;
+					}
+					case GLFW_RELEASE:
+					{
+						KeyReleasedEvent event(key);
+						data.EventCallback(event);
+						break;
+					}
+					case GLFW_REPEAT:
+					{
+						if (key == repeat_key.first)
+							repeat_key.second++;
+						else
+						{
+							repeat_key.first = key;
+							repeat_key.second = 0;
+						}
+
+						KeyPressedEvent event(key, repeat_key.second);
+						data.EventCallback(event);
+						break;
+					}					
+				}
+			});
+
+		glfwSetMouseButtonCallback(m_Window, [](GLFWwindow* window, int button, int action, int mods)
+			{
+				WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+
+				switch (action)
+				{
+					case GLFW_PRESS:
+					{
+						MouseButtonPressedEvent event(button);
+						data.EventCallback(event);
+						break;
+					}					
+					case GLFW_RELEASE:
+					{
+						MouseButtonReleasedEvent event(button);
+						data.EventCallback(event);
+						break;
+					}					
+				}
+			});
+
+		glfwSetScrollCallback(m_Window, [](GLFWwindow* window, double xoffset, double yoffset)
+			{
+				WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+
+				MouseScrolledEvent event((float)xoffset, (float)yoffset);
+				data.EventCallback(event);
+			});
+
+		glfwSetCursorPosCallback(m_Window, [](GLFWwindow* window, double xpos, double ypos)
+			{
+				WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+
+				MouseMovedEvent event((float)xpos, (float)ypos);
+				data.EventCallback(event);
+			});
 	}
 
 	void WindowsWindow::Shutdown()

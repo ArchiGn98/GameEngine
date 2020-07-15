@@ -58,7 +58,7 @@ namespace Hazel
 		template<typename T>
 		bool Dispatch(EventFn<T> func)
 		{
-			if (m_Event.GetEventType() == T::GetStaticType()) 
+			if (m_Event.GetEventType() == T::GetStaticType()) // checks if event type is equals to the template parametr type
 			{
 				m_Event.m_Handled = func(*(T*)&m_Event);
 				return true;
